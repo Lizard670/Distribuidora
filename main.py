@@ -1,11 +1,12 @@
 # -*- coding: cp1252 -*-
-from tkinter import *
+import tkinter as tk
 from tkinter import font as tkfont
+from tkinter.ttk import *
 
 
-class InterfaceLoja(Tk):
+class InterfaceLoja(tk.Tk):
     def __init__(self, *args, **kwargs):
-        Tk.__init__(self, *args, **kwargs)
+        tk.Tk.__init__(self, *args, **kwargs)
 
         # Muda o título da janela
         self.title("Distribuidora")
@@ -35,6 +36,7 @@ class InterfaceLoja(Tk):
                         "Estoque": Estoque(parent=container, controller=self),
                         "TelaVerEstoque": TelaVerEstoque(parent=container, controller=self),
                         "TelaAdicionarProduto": TelaAdicionarProduto(parent=container, controller=self),
+                        "TelaRemoverProduto": TelaRemoverProduto(parent=container, controller=self),
                         "Vendas": Vendas(parent=container, controller=self),
                         "Estatisticas": Estatisticas(parent=container, controller=self)}
         # Todas as páginas precisam ocupar o mesmo espaço para que fiquem empilhadas
@@ -44,25 +46,29 @@ class InterfaceLoja(Tk):
         self.abrir_pagina("TelaInicial")
 
     # Abre a página passada
-    def abrir_pagina(self, page_name):
-        pagina = self.paginas[page_name]
-        # Dando um raise na página, ela vai ficar sobre todas as outras e apenas o conteúdo dela vai aparecer na tela
-        pagina.tkraise()
+    def abrir_pagina(self, nome_pagina):
+        pagina = self.paginas[nome_pagina]
+        # Quando ocorrer um erro no atualizar, ele retorna verdadeiro
+        if not pagina.atualizar():
+            # Dando um raise na página, ela vai ficar sobre todas as
+            # outras e apenas o  conteúdo dela vai aparecer na tela
+            pagina.tkraise()
 
     def novo_produto(self, produto):
-        produto["id"] = self.proximo_id
+        if produto["id"] == -1:
+            produto["id"] = self.proximo_id
+            self.proximo_id += 1  # Atualiza o proximo id
         self.estoque.append(produto)
-        self.proximo_id += 1  # Atualiza o proximo id
 
 
 class TelaInicial(Frame):
     def __init__(self, parent, controller):
-        Frame.__init__(self, parent, pady=5)
+        Frame.__init__(self, parent)
         self.controller = controller
 
         # Texto que fica na parte de cima da tela
         label = Label(self, text="Bem vindo ao programa de \ngerenciamento da distribuidora",
-                      font=controller.fonte_titulo, pady=10, padx=10)
+                      font=controller.fonte_titulo)
         label.pack(side="top", fill="x", pady=10)
 
         # Botões que levam para outras páginas
@@ -71,21 +77,23 @@ class TelaInicial(Frame):
 
         botaoEstoque = Button(self.frameBotoes, text="Abrir página \ndo estoque",
                               command=lambda: controller.abrir_pagina("Estoque"),
-                              font=controller.fonte_botao)
+                              )
         botaoVendas = Button(self.frameBotoes, text="Abrir página \nde vendas",
                              command=lambda: controller.abrir_pagina("Vendas"),
-                             font=controller.fonte_botao)
+                             )
         botaoEstatisticas = Button(self.frameBotoes, text="Abrir página \nde estatisticas",
                                    command=lambda: controller.abrir_pagina("Estatisticas"),
-                                   font=controller.fonte_botao)
+                                   )
 
         botaoEstoque.pack(side="left", padx=5)
         botaoVendas.pack(side="left", padx=5)
         botaoEstatisticas.pack(side="left", padx=5)
 
+    def atualizar(self):
+        pass
+
 
 class Estoque(Frame):
-    # todo
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
@@ -100,25 +108,32 @@ class Estoque(Frame):
 
         botaoVer = Button(self.frameBotoes, text="Ver e editar",
                           command=lambda: controller.abrir_pagina("TelaVerEstoque"),
-                          width=12, height=2, font=controller.fonte_botao)
+                          width=12)
         botaoAdicionar = Button(self.frameBotoes, text="Novo produto",
                                 command=lambda: controller.abrir_pagina("TelaAdicionarProduto"),
-                                width=12, height=2, font=controller.fonte_botao)
+                                width=12)
+        botaoRemover = Button(self.frameBotoes, text="Remover produto",
+                              command=lambda: controller.abrir_pagina("TelaRemoverProduto"),
+                              width=12)
         botaoVoltar = Button(self.frameBotoes, text="Voltar",
                              command=lambda: controller.abrir_pagina("TelaInicial"),
-                             width=12, height=2, font=controller.fonte_botao)
+                             width=12)
 
         botaoVer.pack(side="left", padx=5)
         botaoAdicionar.pack(side="left", padx=5)
+        botaoRemover.pack(side="left", padx=5)
         botaoVoltar.pack(side="left", padx=5)
+
+    def atualizar(self):
+        pass
 
 
 class TelaVerEstoque(Frame):
     def __init__(self, parent, controller):
-        Frame.__init__(self, parent, padx=10, pady=10)
+        Frame.__init__(self, parent)
         self.controller = controller
         self.atributos = ("id", "nome", "preço", "quantidade")
-        self.tamanhos = (5, 20, 8, 11)
+        self.tamanhos = (5, 20, 8, 12)
 
         # Botões
         self.frameBotoes = Frame(self)
@@ -126,11 +141,10 @@ class TelaVerEstoque(Frame):
 
         self.botaoSalvar = Button(self.frameBotoes, text="Salvar",
                                   command=self.salvar,
-                                  width=12, height=2, font=controller.fonte_botao)
-        # TODO perguntar se você quer voltar sem salvar
+                                  width=12)
         self.botaoVoltar = Button(self.frameBotoes, text="Voltar",
-                                  command=lambda: controller.abrir_pagina("Estoque"),
-                                  width=12, height=2, font=controller.fonte_botao)
+                                  command=self.voltar,
+                                  width=12)
 
         self.botaoSalvar.pack(side="left", padx=5, pady=10)
         self.botaoVoltar.pack(side="left", padx=5, pady=10)
@@ -140,32 +154,65 @@ class TelaVerEstoque(Frame):
         self.frameLegendas.pack()
         self.legendas = []
         for i in range(len(self.atributos)):
-            label = Label(self.frameLegendas, text=self.atributos[i].upper(), width=self.tamanhos[i] - 1,
+            label = Label(self.frameLegendas, text=self.atributos[i].upper(), width=self.tamanhos[i],
                           font=controller.fonte_tabela)
             self.legendas.append(label)
             label.pack(side="left")
 
         # Tabela
-        contLinha = 0
         self.tabela = Frame(self)
-        for produto in controller.estoque:
+
+    def salvar(self):
+        # A forma que isso funciona atualmente é apagando a lista inteira de produtos e
+        # salvando tudo de novo, isso é tem uma escalabilidade ruim, porém a outra forma
+        # que pensei de fazer isso, precisaria de outra tela só para editar um valor
+        # individualmente, isso iria tomar mais tempo e exigir alguns pedaços de
+        # conhecimento que atualmente não tenho.
+
+        # Limpa a lista de produtos para poder salvar tudo de novo
+        self.controller.estoque = []
+
+        contAtributo = 0
+        totalAtributos = len(self.atributos)
+        produtoAtual = {}
+        # Passa por cada um dos atributos de cada um dos produtos
+        for widget in self.tabela.winfo_children():
+            # Pega o id do atributo atual
+            idAtributo = contAtributo % totalAtributos
+            # Salva o atributo atual
+            # TODO checar se o usuário colocou o tipo correto de valor
+            produtoAtual[self.atributos[idAtributo]] = widget.get()
+
+            contAtributo += 1
+            # Quando o próximo atributo é o primeiro, salva o produto e reseta
+            if contAtributo % totalAtributos == 0:
+                self.controller.novo_produto(produtoAtual)
+                produtoAtual = {}
+
+    def voltar(self):
+        # TODO perguntar se você quer voltar sem salvar
+        self.controller.abrir_pagina("Estoque")
+
+    def atualizar(self):
+        # Limpa o que tiver dentro da tabela antes de adicionar novamente
+        for widget in self.tabela.winfo_children():
+            widget.destroy()
+
+        contLinha = 0
+        for produto in self.controller.estoque:
             contColuna = 0
             for atributo in self.atributos:
-                self.e = Entry(self.tabela, width=self.tamanhos[contColuna],
-                               font=controller.fonte_tabela)
-                self.e.grid(row=contLinha, column=contColuna)
-                self.e.insert(END, produto[atributo])
+                e = Entry(self.tabela, width=self.tamanhos[contColuna],
+                          font=self.controller.fonte_tabela)
+                e.grid(row=contLinha, column=contColuna)
+                e.insert(tk.END, produto[atributo])
                 contColuna += 1
 
             contLinha += 1
         self.tabela.pack()
 
-    def salvar(self):
-        pass
-
 
 class TelaAdicionarProduto(Frame):
-    # todo
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
@@ -185,7 +232,6 @@ class TelaAdicionarProduto(Frame):
         self.entryPreco = Entry(self.framePrecoEQuantidade, width=8)
         self.labelQuantidade = Label(self.framePrecoEQuantidade, text="Quantidade: ")
         self.entryQuantidade = Entry(self.framePrecoEQuantidade, width=4)
-        self.entryQuantidade.insert(0, "0")
         self.framePrecoEQuantidade.pack(padx=5, pady=5)
         self.labelPreco.pack(side="left")
         self.entryPreco.pack(side="left")
@@ -204,6 +250,11 @@ class TelaAdicionarProduto(Frame):
         botaoAdicionar.pack(side="left")
         botaoCancelar.pack(side="left", padx=(15, 0))
 
+    def atualizar(self):
+        self.entryNome.insert(0, "")
+        self.entryPreco.insert(0, "0")
+        self.entryQuantidade.insert(0, "0")
+
     def novo_produto(self):
         try:
             nome = self.entryNome.get()
@@ -212,9 +263,9 @@ class TelaAdicionarProduto(Frame):
                 raise ValueError
 
             preco = int(self.entryPreco.get())
-            quantidade = int(self.entryPreco.get())
+            quantidade = int(self.entryQuantidade.get())
         except ValueError:
-            # todo popup de erro
+            # TODO popup de erro
             print("Não foi possível adicionar o novo produto: valor invalido")
             return
         else:
@@ -222,8 +273,60 @@ class TelaAdicionarProduto(Frame):
             self.controller.abrir_pagina("Estoque")
 
 
+class TelaRemoverProduto(Frame):
+    def __init__(self, parent, controller):
+        Frame.__init__(self, parent)
+        self.controller = controller
+        self.produtos = []
+        label = Label(self, text="This is page 2", font=controller.fonte_titulo)
+        label.pack(side="top", fill="x", pady=10)
+
+        # Combobox com os produtos
+        self.comboBox = Combobox(self, postcommand=self.atualizar_combobox)
+        self.comboBox.pack()
+
+        # Campo para o usuário confirmar o item que está sendo deletado
+        self.frameNome = Frame(self)
+        self.labelNome = Label(self.frameNome, text="Insira o nome para confirmar \no item que vai ser apagado: ")
+        self.entryNome = Entry(self.frameNome, width=28)
+        self.frameNome.pack(padx=5, pady=5)
+        self.labelNome.pack(side="left")
+        self.entryNome.pack(side="left")
+
+        # Botões
+        self.frameBotoes = Frame(self)
+        self.frameBotoes.pack()
+
+        botaoRemover = Button(self.frameBotoes, text="Remover",
+                              command=self.apagar_produto)
+        botaoCancelar = Button(self.frameBotoes, text="Cancelar",
+                               command=lambda: controller.abrir_pagina("Estoque"))
+
+        botaoRemover.pack(side="left")
+        botaoCancelar.pack(side="left", padx=(15, 0))
+
+    def apagar_produto(self):
+        # TODO Extrair o id do produto que o usuário selecionou
+        #  e se o usuário colocou o nome do produto que selecionou
+        id_produto = 0
+        self.controller.estoque.pop(id_produto)
+        self.controller.abrir_pagina("Estoque")
+
+    def atualizar(self):
+        # Gera a lista dos produtos
+        self.produtos = []
+        for produto in self.controller.estoque:
+            self.produtos.append(str(produto["id"]) + ":" + produto["nome"])
+
+        if not self.produtos:
+            # TODO popup de erro caso tente entrar na tela e não tenha produtos registrados
+            return True
+
+    def atualizar_combobox(self):
+        self.comboBox['values'] = self.produtos
+
 class Vendas(Frame):
-    # todo
+    # TODO
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
@@ -235,7 +338,7 @@ class Vendas(Frame):
 
 
 class Estatisticas(Frame):
-    # todo
+    # TODO
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         self.controller = controller
@@ -250,19 +353,13 @@ def criar_produto(nome, preco, id_produto=-1, quantidade=0):
     return {"nome": nome, "preço": preco, "id": id_produto, "quantidade": quantidade}
 
 
-class Venda:
-    def __init__(self, produto, quantidade, data, desconto=1):
-        self.id_produto = produto.id_numerico
-        self.nome_produto = produto.nome
-        self.preco = produto.preco
-        self.quantidade = quantidade
-
-        self.data = data
-
-        self.desconto = desconto
-
-    def calcular(self):
-        return self.preco * self.quantidade * self.desconto
+def criar_venda(produto, quantidade, data, desconto=1):
+    return {"id_produto": produto["id"],
+            "nome_produto": produto["nome"],
+            "preço": produto["preço"],
+            "quantidade": quantidade,
+            "data": data,
+            "desconto": desconto}
 
 
 if __name__ == "__main__":
