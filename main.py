@@ -11,7 +11,8 @@ class InterfaceLoja(tk.Tk):
         # Muda o título da janela
         self.title("Distribuidora")
 
-        # Cria os objetos fonte que podem ser reutilizados
+        # Estilização do programa
+        Style().configure("TButton", padding=6, relief="flat", background="#ccc")
         self.fonte_titulo = tkfont.Font(family='Helvetica', size=18, weight="bold", slant="italic")
         self.fonte_botao = tkfont.Font(family='Helvetica', size=11)
         self.fonte_tabela = tkfont.Font(family='Helvetica', size=12, weight="bold")
@@ -332,6 +333,7 @@ class TelaRemoverProduto(Frame):
     def atualizar_combobox(self):
         self.comboBox['values'] = self.produtos
 
+
 class Vendas(Frame):
     # TODO
     def __init__(self, parent, controller):
@@ -340,8 +342,11 @@ class Vendas(Frame):
         label = Label(self, text="This is page 2", font=controller.fonte_titulo)
         label.pack(side="top", fill="x", pady=10)
         button = Button(self, text="Go to the start page",
-                        command=lambda: controller.abrir_pagina("telaInicial"))
+                        command=lambda: controller.abrir_pagina("TelaInicial"))
         button.pack()
+
+    def atualizar(self):
+        pass
 
 
 class Estatisticas(Frame):
@@ -352,8 +357,11 @@ class Estatisticas(Frame):
         label = Label(self, text="This is page 3", font=controller.fonte_titulo)
         label.pack(side="top", fill="x", pady=10)
         button = Button(self, text="Go to the start page",
-                        command=lambda: controller.abrir_pagina("telaInicial"))
+                        command=lambda: controller.abrir_pagina("TelaInicial"))
         button.pack()
+
+    def atualizar(self):
+        pass
 
 
 def criar_produto(nome, preco, id_produto=-1, quantidade=0):
