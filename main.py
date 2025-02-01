@@ -278,11 +278,12 @@ class TelaRemoverProduto(Frame):
         Frame.__init__(self, parent)
         self.controller = controller
         self.produtos = []
-        label = Label(self, text="This is page 2", font=controller.fonte_titulo)
+        label = Label(self, text="Selecione o produto \nque deseja remover",
+                      font=controller.fonte_titulo, justify="center")
         label.pack(side="top", fill="x", pady=10)
 
         # Combobox com os produtos
-        self.comboBox = Combobox(self, postcommand=self.atualizar_combobox)
+        self.comboBox = Combobox(self, postcommand=self.atualizar_combobox, state="readonly")
         self.comboBox.pack()
 
         # Campo para o usuário confirmar o item que está sendo deletado
@@ -306,11 +307,17 @@ class TelaRemoverProduto(Frame):
         botaoCancelar.pack(side="left", padx=(15, 0))
 
     def apagar_produto(self):
-        # TODO Extrair o id do produto que o usuário selecionou
-        #  e se o usuário colocou o nome do produto que selecionou
-        id_produto = 0
-        self.controller.estoque.pop(id_produto)
-        self.controller.abrir_pagina("Estoque")
+        # Se não tiver nada selecionado, nem tenta apagar
+        if not self.comboBox.get():
+            return
+        # Separa do bruto o id e o nome
+        id_produto, nome = self.comboBox.get().split(":", 2)
+        id_produto = int(id_produto)
+        nome = nome.strip()
+
+        if nome == self.entryNome.get().strip():
+            self.controller.estoque.pop(id_produto)
+            self.controller.abrir_pagina("Estoque")
 
     def atualizar(self):
         # Gera a lista dos produtos
